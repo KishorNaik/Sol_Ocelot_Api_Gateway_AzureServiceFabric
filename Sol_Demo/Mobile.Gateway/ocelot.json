@@ -1,0 +1,34 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/demo1/{everything}",
+      "UpstreamPathTemplate": "/api/demo1/{everything}",
+      "UpstreamHttpMethod": [
+        "Get",
+        "Post"
+      ],
+      "DownstreamScheme": "http",
+      "ServiceName": "Demo1.ServiceFabric/Demo1.Api",
+      "UseServiceDiscovery": true
+    },
+    {
+      "DownstreamPathTemplate": "/api/demo2/{everything}",
+      "UpstreamPathTemplate": "/api/demo2/{everything}",
+      "UpstreamHttpMethod": [
+        "Get",
+        "Post"
+      ],
+      "DownstreamScheme": "http",
+      "ServiceName": "Demo2.ServiceFabric/Demo2.Api",
+      "UseServiceDiscovery": true
+    }
+  ],
+  "GlobalConfiguration": {
+    "RequestIdKey": "OcRequestId",
+    "ServiceDiscoveryProvider": {
+      "Host": "localhost",
+      "Port": 19081,
+      "Type": "ServiceFabric"
+    }
+  }
+}

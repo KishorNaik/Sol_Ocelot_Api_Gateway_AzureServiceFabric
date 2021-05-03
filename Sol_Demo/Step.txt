@@ -1,0 +1,136 @@
+Step 1
+Run your visual studio instance as Administrator mode.
+
+Create a Service fabric application with services.
+
+Step 2.
+Go to Main solution (Sol_Demo). Right Click on Solution and Select Properties. Select Multiple Project.
+Note: Select Service Fabric Solution Only, Start the Action.
+
+Step 3.
+Make sure the project(s) you have set to Deploy is(are) Set As Startup Project(s). And in Configuration Manager the checkboxes Build and Deploy are ticked for this project.
+
+Step 3.
+Build and Deploy into the cluster.
+Open app in browser. 
+http://localhost:19081
+
+
+Configuration.
+
+If you want to run application on multiple node. then do the following instruction.
+
+Step 1:
+On each Api solution, Go to PackageRoot folder, and select the ServiceManifest.xml.
+Find the following Tag
+ <Endpoint Protocol="http" Name="ServiceEndpoint" Type="Input" Port="8367" />
+
+ Remove the Port Attribute.
+
+Step 2:
+ On Each Service Fabric Solution. Go to ApplicationParameters folder, select the Local.5Node.xml
+ Find the Following Tag
+  <Parameter Name="Producer.Api_InstanceCount" Value="1" />
+
+Set Instance count.
+
+Step 3:
+Go to Service Fabric Explorer web app.
+
+Go to Application Node. and Select the EndPoints. (Note: Here you will get dynamic Port No) (Here you can Test Api through swagger )
+
+http://desktop-jm6n8tl:30002/swagger/index.html
+http://desktop-jm6n8tl:32001/swagger/index.html
+
+
+Call Services using default Gateway. (Here Swagger will not run/ Test api using POSTMAN)
+
+http://localhost:19081/Producers.ServiceFabric/Producer.Api/api/publish/demo
+
+
+https://www.programmersought.com/article/75051627013/
+
+//// Custom Api Gateway
+
+Step 4
+Go to Gateway Service Fabric Application. Go to ApplicationParamters folder. select the Local.5Node.xml
+
+<Parameter Name="Mobile.Gateway_InstanceCount" Value="1" />
+
+Set Instance count as -1
+
+
+Step 5
+Go to Gateway api application (Mobile.Gateway and Web.Gateway), add the following package from nuget
+
+Install-Package Ocelot
+
+NOTE:
+Do not remove PORT attribute in ServiceManifest.xml file.
+
+Step 6
+Create a ocelot.json file and configure following code in json file.
+
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/demo1/{everything}",
+      "UpstreamPathTemplate": "/api/demo1/{everything}",
+      "UpstreamHttpMethod": [
+        "Get",
+        "Post"
+      ],
+      "DownstreamScheme": "http",
+      "ServiceName": "Demo1.ServiceFabric/Demo1.Api",
+      "UseServiceDiscovery": true
+    }
+  ],
+  "GlobalConfiguration": {
+    "RequestIdKey": "OcRequestId",
+    "ServiceDiscoveryProvider": {
+      "Host": "localhost",
+      "Port": 19081,
+      "Type": "ServiceFabric"
+    }
+  }
+}
+
+Step 7
+Go to Gateway.cs file [The FabricRuntime Instance stateless service] and modify the following code.
+
+                        return new WebHostBuilder()
+                                    .UseKestrel()
+                                    .ConfigureServices(
+                                        services => services
+                                            .AddSingleton<StatelessServiceContext>(serviceContext)
+                                            .AddOcelot()
+                                            )
+                                    .UseContentRoot(Directory.GetCurrentDirectory())
+                                   .ConfigureAppConfiguration((hostingContext, config) =>
+                                    {
+                                        config
+                                            .SetBasePath(hostingContext.HostingEnvironment.ContentRootPath)
+                                            .AddJsonFile("appsettings.json", true, true)
+                                            .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", true, true)
+                                            .AddJsonFile("ocelot.json")
+                                            .AddEnvironmentVariables();
+                                    })
+                                    .UseStartup<Startup>()
+                                    .UseServiceFabricIntegration(listener, ServiceFabricIntegrationOptions.None)
+                                    .Configure(app =>
+                                    {
+                                        app.UseOcelot().Wait();
+                                    })
+                                    .UseUrls(url)
+                                    .Build();
+                 
+
+Run the Gateway
+
+Web.Gateway
+http://desktop-jm6n8tl:8830/api/demo1/demo
+http://desktop-jm6n8tl:8830/api/demo2/demo
+
+Mobile.Gateway
+http://desktop-jm6n8tl:8304/api/demo1/demo
+http://desktop-jm6n8tl:8304/api/demo2/demo
