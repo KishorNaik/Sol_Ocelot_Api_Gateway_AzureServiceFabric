@@ -55,7 +55,8 @@ https://www.programmersought.com/article/75051627013/
 Step 4
 Go to Gateway Service Fabric Application. Go to ApplicationParamters folder. select the Local.5Node.xml
 
-<Parameter Name="Mobile.Gateway_InstanceCount" Value="1" />
+<Parameter Name="Mobile.Gateway_InstanceCount" Value="-1" />
+<Parameter Name="Web.Gateway_InstanceCount" Value="-1" />
 
 Set Instance count as -1
 
